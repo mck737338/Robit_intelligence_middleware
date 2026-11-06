@@ -965,12 +965,9 @@ ros2 run robit_blackbox check3 --name "김민찬"
 [NG] 설정 파일이 없습니다: /home/minchan/cyclonedds_bb.xml
 ```
 
-요구사항이 이름(id)마다 다르다는 점이 드러난다.
-`OutputFile` 경로에 내 id(`c03b8270`)가 들어가 있고, 설정 파일 경로도 `~/cyclonedds_bb.xml`로 지정돼 있다.
-
 ### 요구사항 정리
 
-| 항목 | 요구값 | XML 상 위치 (교재 4장) |
+| 항목 | 요구값 | XML 상 위치 |
 |---|---|---|
 | Peers | `127.0.0.1` 포함 | `Discovery` |
 | AllowMulticast | `false` 또는 `spdp` | `General` |
@@ -980,17 +977,7 @@ ros2 run robit_blackbox check3 --name "김민찬"
 
 ---
 
-## 3-2. 로봇과 터미널 운용 방침
-
-- **로봇은 끄지 않았다.** 3단계는 XML 작성과 검사만 하므로 로봇과 통신할 일이 없고,
-  재시작하면 도메인·토픽·QoS가 새로 뽑혀 1·2·4단계에서 확보한 증거(`bb_b7f2`, 도메인 72/89/48)가 무효가 된다.
-- 교재 안내대로 **Cyclone은 이 단계 전용 터미널에서만** 다룬다.
-  환경변수는 터미널 단위이므로 로봇 터미널(Fast DDS)에는 영향이 없다.
-- 검사 도구가 도메인(28)과 rmw를 스스로 설정하므로, 검사 실행 자체에는 수동 export가 필요하지 않았다.
-
----
-
-## 3-3. 작성한 XML (`~/cyclonedds_bb.xml`)
+## 3-2. 작성한 XML (`~/cyclonedds_bb.xml`)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -1019,21 +1006,17 @@ ros2 run robit_blackbox check3 --name "김민찬"
   특정 번호를 박으면 다른 도메인에서는 설정이 무시된다.
 
 - **`AllowMulticast`는 `spdp`** (`false`도 허용되지만 선택하지 않음)
-  `spdp`는 **발견(SPDP)에만 멀티캐스트를 쓰고 데이터는 유니캐스트로** 보낸다.
+  `spdp`는 발견(SPDP)에만 멀티캐스트를 쓰고 데이터는 유니캐스트로 보낸다.
   `false`는 멀티캐스트를 완전히 끄므로 Peers에 적힌 주소에만 전적으로 의존하게 된다.
   교재 4장이 "Wi-Fi처럼 멀티캐스트가 불안정한 구간은 spdp 또는 false + Peers"라고 한 조합 중
   발견 경로를 하나 더 남겨 두는 쪽을 택했다.
-
-- **`Verbosity`는 `config`** — 교재 4장에서 `config`는 "실제로 적용된 설정값과 선택된 인터페이스"를,
-  `discovery`는 "누구를 발견했고 어느 주소로 보냈는지"를 남긴다.
-  이 단계의 목적이 **설정 반영 증명**이므로 `config`가 맞다. `discovery`는 양이 지나치게 많다.
 
 - **`MaxAutoParticipantIndex`의 위치는 `Discovery` 아래** — `ParticipantIndex`가 `auto`일 때
   0번부터 빈 번호를 찾는 그 **탐색의 상한**이다. `General`이 아니라 `Discovery`에 들어간다.
 
 ---
 
-## 3-4. 검사 결과
+## 3-3. 검사 결과
 
 ```bash
 ros2 run robit_blackbox check3 --name "김민찬"
@@ -1054,16 +1037,9 @@ Cyclone + 당신의 XML 로 talker/listener 를 최대 25초간 돌려 봅니다
 ★ 3단계 통과! 기록되었습니다.
 ```
 
-검사가 두 층으로 이루어져 있다는 점이 중요하다.
-
-1. **정적 검사** — XML에 요구된 값이 적혀 있는가
-2. **동적 검사** — 그 설정으로 실제 talker/listener가 통신에 성공하는가, 로그가 생성되는가
-
-즉 "적어 두기만 한" 설정으로는 통과할 수 없는 구조다.
-
 ---
 
-## 3-5. Tracing 로그에서 찾은 근거
+## 3-4. Tracing 로그에서 찾은 근거
 
 ```bash
 ls -l /tmp/bb3_c03b8270.log
@@ -1076,7 +1052,7 @@ ls -l /tmp/bb3_c03b8270.log
 head -60 /tmp/bb3_c03b8270.log
 ```
 
-### 근거 ① — 내가 쓴 네 값이 그대로 반영됐다
+### 근거 1 — 내가 쓴 값이 그대로 반영됐다
 
 ```
 1793887203.454853 [28]   listener: config: Domain/General/AllowMulticast/#text: spdp {2}
@@ -1090,26 +1066,9 @@ XML에 적은 값이 **Cyclone 내부에서 실제로 읽힌 설정값으로 출
 이것이 "적었다"와 "적용됐다"를 가르는 증거다.
 
 `Verbosity: config`는 로그에서 `Tracing/Category`로 전개돼 있다
-(`fatal,error,warning,info,config` — config 수준이 그 아래 등급을 모두 포함한다).
 
-### 근거 ② — 값 끝의 `{}` 표기로 출처가 구분된다
 
-로그를 훑어보면 대부분의 항목은 값 뒤가 `{}`로 비어 있는데,
-**내가 XML에 쓴 항목만 `{2}` 또는 `{0,2}`가 붙어 있다.**
-
-| 항목 | 표기 | 해석 (추정) |
-|---|---|---|
-| `AllowMulticast: spdp` | `{2}` | 내 XML에서 온 값 |
-| `Peers/Peer[@Address]: 127.0.0.1` | `{2}` | 내 XML에서 온 값 |
-| `MaxAutoParticipantIndex: 6` | `{0,2}` | 내 XML + 다른 경로 양쪽에서 참조 |
-| `ParticipantIndex: auto` | `{0}` | 내가 적지 않은 값 (기본값 auto) |
-| `MulticastTimeToLive: 32` | `{}` | 손대지 않은 기본값 |
-
-중괄호 안 숫자가 설정 출처를 가리키는 것으로 보인다.
-덕분에 **"기본값이 그대로인 항목"과 "내가 바꾼 항목"을 로그만 보고 구별할 수 있다.**
-(숫자의 정확한 의미는 확인하지 못했다 — 아래 "아직 이해하지 못한 것" 참조)
-
-### 근거 ③ — 도메인 28에서 돌았다
+### 근거 2 — 도메인 28에서 돌았다
 
 ```
 1793887203.454936 [28]   listener: config: Domain/Discovery/ExternalDomainId/#text: 28 {}
@@ -1118,25 +1077,6 @@ XML에 적은 값이 **Cyclone 내부에서 실제로 읽힌 설정값으로 출
 모든 로그 줄 앞의 `[28]`도 같은 사실을 가리킨다.
 요구사항의 "검사는 ROS_DOMAIN_ID=28 에서 실행된다"가 실제로 지켜졌음을 확인할 수 있다.
 
-### 근거 ④ — 교재 2장 포트 공식이 로그에 그대로 있다
-
-```
-Domain/Discovery/Ports/Base/#text: 7400
-Domain/Discovery/Ports/DomainGain/#text: 250
-Domain/Discovery/Ports/ParticipantGain/#text: 2
-Domain/Discovery/Ports/MulticastMetaOffset/#text: 0
-Domain/Discovery/Ports/UnicastMetaOffset/#text: 10
-Domain/Discovery/Ports/MulticastDataOffset/#text: 1
-Domain/Discovery/Ports/UnicastDataOffset/#text: 11
-```
-
-교재 2장에서 배운 **`포트 = PB + DG × domainId + PG × participantId + offset`**
-(PB=7400, DG=250, PG=2, d0=0 / d1=10 / d2=1 / d3=11)이
-실제 구현체의 설정값으로 그대로 들어 있다.
-
-이 값으로 도메인 28의 SPDP 멀티캐스트 포트를 계산하면
-`7400 + 250 × 28 + 0 = 14400`이 된다.
-교재의 공식이 추상적인 규칙이 아니라 **DDS 구현체가 실제로 참조하는 파라미터**임을 확인했다.
 
 ---
 
@@ -1145,74 +1085,7 @@ Domain/Discovery/Ports/UnicastDataOffset/#text: 11
 | # | 시도한 것 | 결과 | 거기서 배운 것 |
 |---|---|---|---|
 | 1 | XML 없이 `check3` 실행 | 요구사항 + `[NG] 설정 파일이 없습니다` | 검사 도구 자체가 요구사항 전달 수단이었다. 경로까지 지정돼 있었다 |
-| 2 | 로봇을 끄지 않고 진행 | 문제 없음 | 3단계는 로봇과 통신하지 않는다. 껐다면 앞 단계 증거가 무효가 됐을 것 |
-| 3 | `AllowMulticast`를 `false` 대신 `spdp`로 | 통과 | 둘 다 허용되지만 의미가 다르다. 발견 경로를 남기는 쪽을 선택 |
-| 4 | `Verbosity`를 `config`로 | 통과 + 로그 확보 | 목적이 설정 반영 증명이므로 `config`가 적절. `discovery`는 과도 |
-| 5 | 로그에서 `{}` 표기 발견 | 출처 구분 가능 | 기본값과 내가 바꾼 값을 로그만으로 구별할 수 있다 |
-
----
-
-## 3단계 요약: 판단의 흐름
-
-```
-XML 없이 check3 실행 → 요구사항과 파일 경로 확보
-        ↓
-요구 5개 항목을 교재 4장의 XML 구조에 배치
-  (AllowMulticast→General, Peers·MaxAutoParticipantIndex→Discovery,
-   Verbosity·OutputFile→Tracing)
-        ↓
-~/cyclonedds_bb.xml 작성 (Domain Id="any")
-        ↓
-check3 → 정적 검사 6개 + 동적 통신 검사 통과
-        ↓
-Tracing 로그에서 네 값의 실제 반영 확인 → 증명 완료
-```
-
-**이 단계의 핵심은 통과가 아니라 로그다.**
-`check3`가 통과를 알려 주지만, "왜 통과했는지"를 내 눈으로 확인하는 수단은 Tracing 로그뿐이다.
-
----
-
-## 네 단계를 관통한 교훈
-
-### ① "안 보인다"는 출력이 곧 "없다"를 뜻하지 않는다
-
-| 단계 | 증상 | 실제 원인 | 오해했다면 |
-|---|---|---|---|
-| 1단계 | 특정 도메인에 토픽이 안 보임 | `--spin-time`이 짧아 SPDP를 못 받음 | "그 도메인은 비어 있다"고 결론 |
-| 2단계 | `topic info`가 Unknown 반환 | daemon 캐시가 비어 있음 | "그 토픽은 존재하지 않는다"고 결론 |
-| 2단계 | QoS 맞췄는데 수신 없음 | 나머지 한 정책(reliability)이 어긋남 | "transient local이 안 먹는다"고 결론 |
-| 4단계 | 토픽 이름을 고쳤는데도 통과 안 됨 | 남아 있던 reliability 불일치 | "수정이 반영 안 됐다"고 결론 |
-
-네 경우 모두 **다른 방식으로 교차 검증한 것**이 해결의 실마리였다.
-특히 2단계와 4단계는 원인이 사실상 같았다 —
-**QoS 정책은 항목별로 각각 판정되며, 하나라도 어긋나면 조용히 연결되지 않는다.**
-
-### ② 증상의 층을 가르는 질문은 "상대가 목록에 보이는가"
-
-교재 1장의 증상 지도에서 말한 **"안 보인다"와 "보이는데 안 온다"의 구분**이
-실제 디버깅에서 얼마나 결정적인지 확인했다.
-
-- 1단계: "안 보인다" → 발견(2장) 문제
-- 2단계·4단계: "보이는데 안 온다" → 매칭(3장) 문제
-
-4단계에서는 한 번의 수정으로 전자에서 후자로 **증상이 이동하는 과정**을 관측할 수 있었다.
-`Subscription count`가 0에서 1로 바뀐 순간이 그 경계였다.
-
-### ③ 설정은 "적은 것"이 아니라 "반영된 것"을 봐야 한다
-
-이 원칙은 3단계뿐 아니라 전 과정에 걸쳐 있었다.
-
-| 상황 | 적은 값 | 실제 반영 확인 수단 |
-|---|---|---|
-| 1단계 | `.bashrc`의 `ROS_DOMAIN_ID=99` | `env | grep` — 내가 의도하지 않은 값이 살아 있었다 |
-| 2단계 | 노드의 QoSProfile | `topic info -v`의 구독자 측 QoS |
-| 4단계 | `listener.env` 수정 | `topic info -v`의 `Subscription count`와 GID 변화 |
-| 3단계 | `cyclonedds_bb.xml` | Tracing 로그의 `config:` 줄 |
-
-**매번 "적은 쪽"이 아니라 "읽힌 쪽"을 확인했기 때문에** 원인을 좁힐 수 있었다.
-특히 4단계에서 GID가 두 번 바뀐 것은, 파일 수정이 실제 프로세스 재시작으로 이어졌다는
-간접 증거였고 "수정이 반영 안 된 것 아닐까"라는 의심을 지울 수 있었다.
+| 2 | `AllowMulticast`를 `false` 대신 `spdp`로 | 통과 | 둘 다 허용되지만 의미가 다르다. 발견 경로를 남기는 쪽을 선택 |
 
 ---
 
@@ -1221,36 +1094,8 @@ Tracing 로그에서 네 값의 실제 반영 확인 → 증명 완료
 - `topic info -v` 출력의 **History (Depth)가 `UNKNOWN`**으로 나오는 이유.
   교재에는 Depth가 QoS 정책의 하나로 나오는데, 왜 다른 항목과 달리 조회되지 않는지 모르겠다.
   rmw 구현체가 이 값을 노출하지 않는 것인지, CLI의 한계인지 확인이 필요하다.
-- `ros2 topic info`에 `--no-daemon` 옵션이 없는 이유.
-  `topic list`와 `node info`는 지원하는데 `topic info`만 daemon에 묶여 있는 설계상의 이유를 모르겠다.
 - QoS 비호환이 발생했을 때 교재는 "incompatible QoS 경고가 노드 로그에 남는다"고 하는데,
   4-4의 상태에서 그 경고를 직접 확인하지 못했다.
   로봇 노드의 로그를 볼 수 없어서인지, `/rosout`을 구독해야 보이는 것인지 확인이 필요하다.
-- Cyclone Tracing 로그에서 값 뒤에 붙는 **`{2}`, `{0,2}`, `{0}`, `{}` 표기의 정확한 의미.**
-  내가 XML에 쓴 항목에만 숫자가 붙는 것으로 보아 설정 출처를 가리키는 것 같지만,
-  `{0}`과 `{2}`가 각각 무엇을 뜻하는지, `{0,2}`처럼 둘이 함께 나오는 경우가 무엇인지는 확인하지 못했다.
-- 3단계 검사가 도메인 28에서 `AllowMulticast=spdp` + `Peers=127.0.0.1` 조합으로 통신에 성공했는데,
-  이때 실제 발견이 **멀티캐스트로 이뤄졌는지 Peers 유니캐스트로 이뤄졌는지**는 구분하지 못했다.
-  `Verbosity`를 `discovery`로 올리면 확인할 수 있을 것으로 보인다.
 
 ---
-
-## 5단계 자유 탐구 후보
-
-위 "아직 이해하지 못한 것"에서 실험으로 답할 수 있는 주제를 뽑았다.
-
-1. **incompatible QoS 경고 관측**
-   4-4 상태(토픽 일치 + reliability 불일치)를 내 노드로 재현하고,
-   `/rosout`을 구독하거나 노드 로그 레벨을 올려 경고가 실제로 남는지 확인한다.
-   4단계에서 "조용히 연결되지 않았다"고 적었는데, 정말 아무 신호도 없는지를 검증하는 셈이다.
-
-2. **발견 경로 구분**
-   3-5의 마지막 의문. `Verbosity`를 `config`에서 `discovery`로 올려
-   `AllowMulticast=spdp`일 때와 `false`일 때 발견 패킷이 어디로 나가는지 비교한다.
-   교재 4장의 "spdp와 false의 차이"를 로그로 직접 확인할 수 있다.
-
-3. **포트 공식 실측**
-   3-5 근거 ④에서 로그로 확인한 `Base=7400 / DomainGain=250 / ParticipantGain=2`를 근거로
-   도메인 28의 SPDP 포트를 `7400 + 250×28 = 14400`으로 계산하고,
-   `ss -ulpn`으로 실제 열린 포트와 대조한다.
-   프로세스를 여러 개 띄워 `participantId`가 늘어나는 것도 함께 관측한다.
