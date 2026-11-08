@@ -224,8 +224,6 @@ wlp2s0           UP             192.168.0.5/24 ...
 eth1             UP             192.168.0.109/24 ...
 ```
 
-![Ubuntu와 WSL이 같은 192.168.0.0/24 대역에 있음](evidence/shot1_ip.png)
-
 **전원 절약을 끄기 전 — WSL → Ubuntu**
 
 ```
@@ -244,8 +242,6 @@ rtt min/avg/max/mdev = 1.561/1.915/2.315/0.258 ms
 
 평균 68.7ms → 1.9ms, 흔들림(mdev) 21.2ms → 0.26ms.
 
-![전원 절약을 끄기 전후의 ping 비교](evidence/shot2_ping_powersave.png)
-
 **발견 확인**
 
 ```bash
@@ -255,7 +251,7 @@ $ ROS_DOMAIN_ID=5 ros2 node list --spin-time 5
 
 기본 Fast DDS 멀티캐스트만으로 두 PC가 서로를 발견했다. Cyclone이나 Peers 설정은 쓰지 않았다.
 
-![WSL의 pong 노드가 Ubuntu에서 보임](evidence/shot3_discovery.png)
+![2.png — WSL의 pong 노드가 Ubuntu에서 보임](evidence/2.png)
 
 ### 4-4. reliable 4조건 측정
 
@@ -284,14 +280,12 @@ qdisc netem 8002: root refcnt 2 limit 1000 loss 10%
 qdisc noqueue 0: root refcnt 2
 ```
 
-![reliable 4조건 측정 — tc 적용 상태와 결과](evidence/shot4_run_reliable.png)
+![reliable3-6.png — reliable 4조건의 tc 적용 상태와 측정 결과](evidence/reliable3-6.png)
 
 ### 4-5. best_effort 4조건 측정
 
 QoS를 바꾸려면 양쪽 노드를 모두 재시작해야 한다.
 WSL의 `pong.py`를 `best_effort`로 다시 띄운 뒤 같은 조건을 반복했다.
-
-![pong을 best_effort로 재시작](evidence/shot5_pong_best_effort.png)
 
 ```
 === best_effort / netem loss 0% ===
@@ -314,7 +308,7 @@ qdisc netem 8003: root refcnt 2 limit 1000 loss 10%
 qdisc noqueue 0: root refcnt 2
 ```
 
-![best_effort 4조건 측정 — tc 적용 상태와 결과](evidence/shot6_run_best_effort.png)
+![best_effort3-6.png — best_effort 4조건의 tc 적용 상태와 측정 결과](evidence/best_effort3-6.png)
 
 ### 4-6. 뒷정리
 
@@ -326,41 +320,49 @@ sudo iw dev wlp2s0 set power_save on
 sudo tailscale up
 ```
 
-![netem 해제와 설정 복구 확인](evidence/shot7_cleanup.png)
+### 4-7. 첨부 자료
 
-### 4-7. 증거 파일
+실험에 쓴 코드, 측정 결과, 증거 파일을 모두 GitHub 저장소에 함께 올렸다.
+이 보고서는 저장소의 `README.md` 이며, 아래 경로는 모두 저장소 기준이다.
 
-**스크린샷**
+```
+.
+├── README.md                     이 보고서
+├── ping.py                       측정 노드 (Ubuntu)                → 3-4
+├── pong.py                       에코 노드 (WSL)                   → 3-4
+├── plot.py                       그래프 생성                        → 4-2
+├── run_all.sh                    조건별 실행 스크립트                → 3-5
+├── results.csv                   측정값 전체 (머리줄 + 8줄)          → 4-1
+└── evidence/
+    ├── graph.png                 그래프 2개                        → 4-2
+    ├── 2.png                     ros2 node list 에 /pong           → 4-3
+    ├── reliable3-6.png           reliable 4조건 측정 화면            → 4-4
+    ├── best_effort3-6.png        best_effort 4조건 측정 화면         → 4-5
+    ├── 00_ip_ubuntu.txt          Ubuntu IP                        → 4-3
+    ├── 00_ip_wsl.txt             WSL IP (mirrored 적용 후)         → 4-3
+    ├── 00_env_ubuntu.txt         Ubuntu ROS 환경변수               → 3-1
+    ├── 00_env_wsl.txt            WSL ROS 환경변수                  → 3-1
+    ├── 01_ping_u2w.txt           Ubuntu → WSL ping                → 4-3
+    ├── 01_ping_w2u.txt           WSL → Ubuntu ping (절전 켜짐)     → 3-3, 4-3
+    ├── 01_ping_w2u_after_powersave.txt   끈 뒤                     → 3-3, 4-3
+    ├── 02_powersave_off.txt      Power save: off 확인              → 3-3
+    ├── 02_route.txt              netem을 건 인터페이스 확정 근거     → 3-5
+    ├── 02_node_list.txt          상대 노드 발견                     → 4-3
+    ├── tc_loss0.txt ~ tc_loss10.txt      조건별 netem 적용 상태     → 4-4, 4-5
+    ├── tc_removed.txt            netem 해제 확인                   → 4-6
+    ├── run_reliable_loss0.txt ~ loss10.txt       reliable 측정 원본 → 4-4
+    ├── run_best_effort_loss0.txt ~ loss10.txt    best_effort 측정 원본 → 4-5
+    ├── terminal_U1.log           측정 터미널 전체 기록
+    └── v1_startup_loss/          1차 측정(실패) 결과                → 3-6, 7절
+```
+
+**스크린샷 3장**
 
 | 파일 | 내용 | 본문 위치 |
 |---|---|---|
-| `evidence/shot1_ip.png` | 양쪽 `ip -br addr` — 같은 대역 | 4-3 |
-| `evidence/shot2_ping_powersave.png` | 전원 절약 끄기 전후 ping 비교 | 4-3 |
-| `evidence/shot3_discovery.png` | `ros2 node list` 에 `/pong` | 4-3 |
-| `evidence/shot4_run_reliable.png` | **`./run_all.sh wlp2s0 reliable` 전체 출력** | 4-4 |
-| `evidence/shot5_pong_best_effort.png` | `pong ready qos=best_effort` | 4-5 |
-| `evidence/shot6_run_best_effort.png` | **`./run_all.sh wlp2s0 best_effort` 전체 출력** | 4-5 |
-| `evidence/shot7_cleanup.png` | netem 해제 · 설정 복구 | 4-6 |
-| `evidence/graph.png` | 그래프 2개 | 4-2 |
-
-**출력 파일**
-
-| 파일 | 내용 |
-|---|---|
-| `results.csv` | 측정값 전체 (머리줄 + 8줄) |
-| `evidence/00_ip_ubuntu.txt`, `00_ip_wsl.txt` | 양쪽 IP |
-| `evidence/00_env_ubuntu.txt`, `00_env_wsl.txt` | 양쪽 ROS 환경변수 |
-| `evidence/01_ping_u2w.txt`, `01_ping_w2u.txt` | 양방향 ping (전원 절약 끄기 전) |
-| `evidence/01_ping_w2u_after_powersave.txt` | 끈 뒤 |
-| `evidence/02_powersave_off.txt` | `Power save: off` |
-| `evidence/02_route.txt` | netem을 건 인터페이스 확정 |
-| `evidence/02_node_list.txt` | 상대 노드 발견 |
-| `evidence/tc_loss*.txt` | 조건별 netem 적용 상태 |
-| `evidence/run_*_loss*.txt` | 측정 8건 |
-| `evidence/tc_removed.txt` | netem 해제 |
-| `evidence/terminal_U1.log` | 메인 터미널 전체 기록 |
-| `evidence/v1_startup_loss/` | 1차 측정(실패) 결과 |
-| `ping.py`, `pong.py`, `plot.py`, `run_all.sh` | 실험 코드 |
+| `evidence/2.png` | `ros2 node list` 에 WSL의 `/pong` 이 보임 | 4-3 |
+| `evidence/reliable3-6.png` | `./run_all.sh wlp2s0 reliable` — 4조건의 tc 상태와 측정 결과 | 4-4 |
+| `evidence/best_effort3-6.png` | `./run_all.sh wlp2s0 best_effort` — 4조건의 tc 상태와 측정 결과 | 4-5 |
 
 ---
 
