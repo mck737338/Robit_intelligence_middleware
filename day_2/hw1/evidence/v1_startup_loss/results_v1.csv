@@ -1,0 +1,5 @@
+tag,qos,recv,sent,loss_pct,mean_ms,p50_ms,p95_ms,max_ms
+loss0,reliable,181,200,9.50,3.92,3.06,7.95,17.88
+loss1,reliable,175,200,12.50,4.77,3.23,9.57,116.42
+loss5,reliable,169,200,15.50,90.87,3.27,615.66,916.48
+loss10,reliable,194,200,3.00,126.23,4.05,615.96,915.73

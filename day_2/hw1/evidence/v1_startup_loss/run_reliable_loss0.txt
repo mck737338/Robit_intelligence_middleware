@@ -1,0 +1,2 @@
+
+[loss0] qos=reliable  n=181/200  loss=9.5%  mean=3.9ms  p50=3.1ms  p95=8.0ms  max=17.9ms

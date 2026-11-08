@@ -1,0 +1,2 @@
+
+[loss0] qos=best_effort  n=200/200  loss=0.0%  mean=5.3ms  p50=4.1ms  p95=12.0ms  max=22.8ms
